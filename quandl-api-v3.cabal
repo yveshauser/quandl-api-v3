@@ -1,0 +1,25 @@
+cabal-version:       >=1.10
+name:                quandl-api-v3
+version:             0.1.0.0
+license-file:        LICENSE
+author:              Yves Hauser
+build-type:          Simple
+extra-source-files:  CHANGELOG.md
+
+library
+  hs-source-dirs:      src
+  exposed-modules:
+                       Data.Quandl
+  build-depends:       base >=4.12 && <4.13
+                     , aeson
+                     , async
+                     , http-client
+                     , http-client-tls
+                     , http-media
+                     , mtl
+                     , servant
+                     , servant-client
+                     , time
+                     , unordered-containers
+                     , vector
+  default-language:    Haskell2010
