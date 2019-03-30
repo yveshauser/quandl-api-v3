@@ -7,7 +7,6 @@
 module Data.Quandl
   where
 
-import           Control.Monad.Except
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.HashMap.Strict as HM
@@ -152,6 +151,7 @@ instance ToHttpApiData Transform where
 instance FromJSON Order where
   parseJSON (String "asc")  = pure Asc
   parseJSON (String "desc") = pure Desc
+  parseJSON _               = fail "unexpected value"
 
 instance FromJSON Collapse where
   parseJSON (String "daily")     = pure Daily
@@ -159,6 +159,7 @@ instance FromJSON Collapse where
   parseJSON (String "monthly")   = pure Monthly
   parseJSON (String "quarterly") = pure Quarterly
   parseJSON (String "annual")    = pure Annual
+  parseJSON _                    = fail "unexpected value"
 
 instance FromJSON Transform where
   parseJSON (String "diff")       = pure Diff
@@ -166,62 +167,67 @@ instance FromJSON Transform where
   parseJSON (String "rdiff_from") = pure Rdiff_from
   parseJSON (String "cumul")      = pure Cumul
   parseJSON (String "normalize")  = pure Normalize
+  parseJSON _                     = fail "unexpected value"
 
 instance FromJSON QuandlResponse where
   parseJSON (Object v) =
     QuandlResponse <$> v .: "dataset"
+  parseJSON _          = fail "expected object"
 
 instance FromJSON DataSet where
   parseJSON (Object v) = do
-      _name                  <- v .: "name"
-      _database_code         <- v .: "database_code"
-      _database_id           <- v .: "database_id"
-      _description           <- v .: "description"
-      _dataset_code          <- v .: "dataset_code"
-      _column_names          <- v .: "column_names"
-      _newest_available_date <- v .: "newest_available_date"
-      _oldest_available_date <- v .: "oldest_available_date"
-      _limit                 <- v .: "limit"
-      _column_index          <- v .: "column_index"
-      _start_date            <- v .: "start_date"
-      _end_date              <- v .: "end_date"
-      _order                 <- v .: "order"
-      _collapse              <- v .: "collapse"
-      _transform             <- v .: "transform"
+      name                  <- v .: "name"
+      database_code         <- v .: "database_code"
+      database_id           <- v .: "database_id"
+      description           <- v .: "description"
+      dataset_code          <- v .: "dataset_code"
+      column_names          <- v .: "column_names"
+      newest_available_date <- v .: "newest_available_date"
+      oldest_available_date <- v .: "oldest_available_date"
+      limit                 <- v .: "limit"
+      column_index          <- v .: "column_index"
+      start_date            <- v .: "start_date"
+      end_date              <- v .: "end_date"
+      order                 <- v .: "order"
+      collapse              <- v .: "collapse"
+      transform             <- v .: "transform"
 
-      let l               = length _column_names
-      let (Just _dataset) = HM.lookup "data" v
+      let l              = length column_names
+      let (Just dataset) = HM.lookup "data" v
 
-      _data <- parseArray l _dataset
+      data_ <- parseArray l dataset
 
       return $ DataSet
-                  _name
-                  _database_code
-                  _database_id
-                  _description
-                  _dataset_code
-                  _column_names
-                  _data
-                  _newest_available_date
-                  _oldest_available_date
-                  _limit
-                  _column_index
-                  _start_date
-                  _end_date
-                  _order
-                  _collapse
-                  _transform
+                  name
+                  database_code
+                  database_id
+                  description
+                  dataset_code
+                  column_names
+                  data_
+                  newest_available_date
+                  oldest_available_date
+                  limit
+                  column_index
+                  start_date
+                  end_date
+                  order
+                  collapse
+                  transform
 
-  parseJSON _ = mzero
+  parseJSON _ = fail "expected object"
 
 parseArray :: Int -> Value -> Parser Data
-parseArray 2  (Array a) = Data1 <$> mapM parseJSON (V.toList a)
-parseArray 3  (Array a) = Data2 <$> mapM parseJSON (V.toList a)
-parseArray 4  (Array a) = Data3 <$> mapM parseJSON (V.toList a)
-parseArray 5  (Array a) = Data4 <$> mapM parseJSON (V.toList a)
-parseArray 6  (Array a) = Data5 <$> mapM parseJSON (V.toList a)
-parseArray 7  (Array a) = Data6 <$> mapM parseJSON (V.toList a)
-parseArray 8  (Array a) = Data7 <$> mapM parseJSON (V.toList a)
-parseArray 9  (Array a) = Data8 <$> mapM parseJSON (V.toList a)
-parseArray 10 (Array a) = Data9 <$> mapM parseJSON (V.toList a)
-parseArray _ _          = fail "expected an array"
+parseArray 2  (Array a) = Data1 <$> parseArgs a
+parseArray 3  (Array a) = Data2 <$> parseArgs a
+parseArray 4  (Array a) = Data3 <$> parseArgs a
+parseArray 5  (Array a) = Data4 <$> parseArgs a
+parseArray 6  (Array a) = Data5 <$> parseArgs a
+parseArray 7  (Array a) = Data6 <$> parseArgs a
+parseArray 8  (Array a) = Data7 <$> parseArgs a
+parseArray 9  (Array a) = Data8 <$> parseArgs a
+parseArray 10 (Array a) = Data9 <$> parseArgs a
+parseArray _ _          = fail "expected array"
+
+parseArgs :: FromJSON a => V.Vector Value -> Parser [a]
+parseArgs = mapM parseJSON . V.toList
