@@ -7,6 +7,7 @@
 module Data.Quandl
   where
 
+import           Control.Concurrent.Async (mapConcurrently)
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.HashMap.Strict as HM
@@ -41,20 +42,29 @@ quandlApi :: Proxy TimeSeriesApi
 quandlApi = Proxy
 
 -- | Load data from quandl
-quandlClient :: Parameter -> IO (Either ClientError QuandlResponse)
+quandlLoad :: Parameter -> IO (Either ClientError QuandlResponse)
+quandlLoad p = flip mkClientEnv quandlUrl <$> newManager tlsManagerSettings
+  >>= quandlClient p
+
+-- | Load a multiple data from quandl
+quandlLoads :: [Parameter] -> IO (Either ClientError [QuandlResponse])
+quandlLoads p = flip mkClientEnv quandlUrl <$> newManager tlsManagerSettings
+  >>= \e -> sequence <$> mapConcurrently (flip quandlClient e) p
+
+-- | Client
+quandlClient :: Parameter -> ClientEnv -> IO (Either ClientError QuandlResponse)
 quandlClient Parameter{..} =
-  flip mkClientEnv quandlUrl <$> newManager tlsManagerSettings
-  >>= runClientM (client quandlApi
-        database_code
-        dataset_code
-        limit
-        column_index
-        start_date
-        end_date
-        order
-        collapse
-        transform
-        api_key)
+  runClientM (client quandlApi
+    database_code
+    dataset_code
+    limit
+    column_index
+    start_date
+    end_date
+    order
+    collapse
+    transform
+    api_key)
 
 -- Types
 
