@@ -33,6 +33,8 @@ type TimeSeriesApi =
   :> QueryParam "api_key" String
   :> Get '[JSON] QuandlResponse
 
+type QuandlException = ClientError
+
 -- | The quandl base URL
 quandlUrl :: BaseUrl
 quandlUrl = BaseUrl Https "quandl.com" 443 "/api/v3/datasets"
@@ -42,17 +44,17 @@ quandlApi :: Proxy TimeSeriesApi
 quandlApi = Proxy
 
 -- | Load data from quandl
-quandlLoad :: Parameter -> IO (Either ClientError QuandlResponse)
+quandlLoad :: Parameter -> IO (Either QuandlException QuandlResponse)
 quandlLoad p = flip mkClientEnv quandlUrl <$> newManager tlsManagerSettings
   >>= quandlClient p
 
 -- | Load a multiple data from quandl
-quandlLoads :: [Parameter] -> IO (Either ClientError [QuandlResponse])
+quandlLoads :: [Parameter] -> IO (Either QuandlException [QuandlResponse])
 quandlLoads p = flip mkClientEnv quandlUrl <$> newManager tlsManagerSettings
   >>= \e -> sequence <$> mapConcurrently (flip quandlClient e) p
 
 -- | Client
-quandlClient :: Parameter -> ClientEnv -> IO (Either ClientError QuandlResponse)
+quandlClient :: Parameter -> ClientEnv -> IO (Either QuandlException QuandlResponse)
 quandlClient Parameter{..} =
   runClientM (client quandlApi
     database_code
