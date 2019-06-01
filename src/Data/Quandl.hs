@@ -8,9 +8,11 @@ module Data.Quandl
   where
 
 import           Control.Concurrent.Async (mapConcurrently)
+import           Control.Lens hiding (transform)
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.HashMap.Strict as HM
+import           Data.List
 import           Data.Proxy
 import qualified Data.Vector as V
 import           Data.Time.Calendar
@@ -243,3 +245,71 @@ parseArray _ _          = fail "expected array"
 
 parseArgs :: FromJSON a => V.Vector Value -> Parser [a]
 parseArgs = mapM parseJSON . V.toList
+
+-- Accessor
+
+-- | Select a specific field by name together with the date from the
+-- response received from quandl
+select_field :: String
+             -> QuandlResponse
+             -> [(Day, Double)]
+select_field s (QuandlResponse DataSet{..}) =
+
+  let i = elemIndex s column_names in select dataset_data i
+
+  where
+    select_two_fields  :: Getting a s a -> Getting b s b -> s -> (a, b)
+    select_two_fields a b x = (x ^. a, x ^. b)
+
+    select_two_fields_per_row  :: Getting a s a -> Getting b s b -> [s] -> [(a, b)]
+    select_two_fields_per_row a b = map (select_two_fields a b)
+
+    select :: Data -> Maybe Int -> [(Day, Double)]
+    select (Data1 l) (Just 1) = select_two_fields_per_row _1 _2 l
+    select (Data2 l) (Just 1) = select_two_fields_per_row _1 _2 l
+    select (Data2 l) (Just 2) = select_two_fields_per_row _1 _3 l
+    select (Data3 l) (Just 1) = select_two_fields_per_row _1 _2 l
+    select (Data3 l) (Just 2) = select_two_fields_per_row _1 _3 l
+    select (Data3 l) (Just 3) = select_two_fields_per_row _1 _4 l
+    select (Data4 l) (Just 1) = select_two_fields_per_row _1 _2 l
+    select (Data4 l) (Just 2) = select_two_fields_per_row _1 _3 l
+    select (Data4 l) (Just 3) = select_two_fields_per_row _1 _4 l
+    select (Data4 l) (Just 4) = select_two_fields_per_row _1 _5 l
+    select (Data5 l) (Just 1) = select_two_fields_per_row _1 _2 l
+    select (Data5 l) (Just 2) = select_two_fields_per_row _1 _3 l
+    select (Data5 l) (Just 3) = select_two_fields_per_row _1 _4 l
+    select (Data5 l) (Just 4) = select_two_fields_per_row _1 _5 l
+    select (Data5 l) (Just 5) = select_two_fields_per_row _1 _6 l
+    select (Data6 l) (Just 1) = select_two_fields_per_row _1 _2 l
+    select (Data6 l) (Just 2) = select_two_fields_per_row _1 _3 l
+    select (Data6 l) (Just 3) = select_two_fields_per_row _1 _4 l
+    select (Data6 l) (Just 4) = select_two_fields_per_row _1 _5 l
+    select (Data6 l) (Just 5) = select_two_fields_per_row _1 _6 l
+    select (Data6 l) (Just 6) = select_two_fields_per_row _1 _7 l
+    select (Data7 l) (Just 1) = select_two_fields_per_row _1 _2 l
+    select (Data7 l) (Just 2) = select_two_fields_per_row _1 _3 l
+    select (Data7 l) (Just 3) = select_two_fields_per_row _1 _4 l
+    select (Data7 l) (Just 4) = select_two_fields_per_row _1 _5 l
+    select (Data7 l) (Just 5) = select_two_fields_per_row _1 _6 l
+    select (Data7 l) (Just 6) = select_two_fields_per_row _1 _7 l
+    select (Data7 l) (Just 7) = select_two_fields_per_row _1 _8 l
+    select (Data8 l) (Just 1) = select_two_fields_per_row _1 _2 l
+    select (Data8 l) (Just 2) = select_two_fields_per_row _1 _3 l
+    select (Data8 l) (Just 3) = select_two_fields_per_row _1 _4 l
+    select (Data8 l) (Just 4) = select_two_fields_per_row _1 _5 l
+    select (Data8 l) (Just 5) = select_two_fields_per_row _1 _6 l
+    select (Data8 l) (Just 6) = select_two_fields_per_row _1 _7 l
+    select (Data8 l) (Just 7) = select_two_fields_per_row _1 _8 l
+    select (Data8 l) (Just 8) = select_two_fields_per_row _1 _9 l
+    select (Data9 l) (Just 1) = select_two_fields_per_row _1 _2 l
+    select (Data9 l) (Just 2) = select_two_fields_per_row _1 _3 l
+    select (Data9 l) (Just 3) = select_two_fields_per_row _1 _4 l
+    select (Data9 l) (Just 4) = select_two_fields_per_row _1 _5 l
+    select (Data9 l) (Just 5) = select_two_fields_per_row _1 _6 l
+    select (Data9 l) (Just 6) = select_two_fields_per_row _1 _7 l
+    select (Data9 l) (Just 7) = select_two_fields_per_row _1 _8 l
+    select (Data9 l) (Just 8) = select_two_fields_per_row _1 _9 l
+    select (Data9 l) (Just 9) = select_two_fields_per_row _1 _10 l
+    select _         (Just _) = fail "unexpected selector"
+    select _         Nothing  = fail "unexpected selector"
+

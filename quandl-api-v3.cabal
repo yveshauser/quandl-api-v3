@@ -16,6 +16,7 @@ library
                      , http-client
                      , http-client-tls
                      , http-media
+                     , lens
                      , mtl
                      , servant
                      , servant-client
