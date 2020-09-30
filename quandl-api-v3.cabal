@@ -4,13 +4,12 @@ version:             0.1.0.0
 license-file:        LICENSE
 author:              Yves Hauser
 build-type:          Simple
-extra-source-files:  CHANGELOG.md
 
 library
   hs-source-dirs:      src
   exposed-modules:
                        Data.Quandl
-  build-depends:       base >=4.12 && <4.13
+  build-depends:       base >=4.13
                      , aeson
                      , async
                      , http-client
