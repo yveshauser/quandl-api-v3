@@ -3,6 +3,8 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards       #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use camelCase" #-}
 
 module Data.Quandl
   where
@@ -10,8 +12,8 @@ module Data.Quandl
 import           Control.Concurrent.Async (mapConcurrently)
 import           Control.Lens hiding (transform)
 import           Data.Aeson
+import           Data.Aeson.KeyMap as M (lookup)
 import           Data.Aeson.Types
-import qualified Data.HashMap.Strict as HM
 import           Data.List
 import           Data.Proxy
 import qualified Data.Vector as V
@@ -47,13 +49,11 @@ quandlApi = Proxy
 
 -- | Load data from quandl
 quandlLoad :: Parameter -> IO (Either QuandlException QuandlResponse)
-quandlLoad p = flip mkClientEnv quandlUrl <$> newManager tlsManagerSettings
-  >>= quandlClient p
+quandlLoad p = newManager tlsManagerSettings >>= quandlClient p . flip mkClientEnv quandlUrl
 
 -- | Load a multiple data from quandl
 quandlLoads :: [Parameter] -> IO (Either QuandlException [QuandlResponse])
-quandlLoads p = flip mkClientEnv quandlUrl <$> newManager tlsManagerSettings
-  >>= \e -> sequence <$> mapConcurrently (flip quandlClient e) p
+quandlLoads p = newManager tlsManagerSettings >>= (\e -> sequence <$> mapConcurrently (`quandlClient` e) p) . flip mkClientEnv quandlUrl
 
 -- | Client
 quandlClient :: Parameter -> ClientEnv -> IO (Either QuandlException QuandlResponse)
@@ -106,7 +106,7 @@ data Parameter = Parameter {
   , api_key       :: Maybe String
   }
 
-data QuandlResponse = QuandlResponse DataSet
+newtype QuandlResponse = QuandlResponse DataSet
   deriving (Show)
 
 data Data =
@@ -207,7 +207,7 @@ instance FromJSON DataSet where
       transform             <- v .: "transform"
 
       let l              = length column_names
-      let (Just dataset) = HM.lookup "data" v
+      let (Just dataset) = M.lookup "data" v
 
       data_ <- parseArray l dataset
 
@@ -312,4 +312,3 @@ select_field s (QuandlResponse DataSet{..}) =
     select (Data9 l) (Just 9) = select_two_fields_per_row _1 _10 l
     select _         (Just _) = fail "unexpected selector"
     select _         Nothing  = fail "unexpected selector"
-
