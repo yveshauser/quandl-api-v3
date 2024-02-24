@@ -26,6 +26,7 @@
               buildInputs = with pkgs; [
                 haskellPackages.haskell-language-server
                 cabal-install
+                zlib.dev
               ];
               inputsFrom = builtins.attrValues self.packages.${system};
               LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath libs;
