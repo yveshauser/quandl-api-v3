@@ -10,7 +10,7 @@ library
   exposed-modules:
                        Data.Quandl
   build-depends:       base >=4.13
-                     , aeson
+                     , aeson >=2.0.0.0
                      , async
                      , http-client
                      , http-client-tls

@@ -206,28 +206,29 @@ instance FromJSON DataSet where
       collapse              <- v .: "collapse"
       transform             <- v .: "transform"
 
-      let l              = length column_names
-      let (Just dataset) = M.lookup "data" v
-
-      data_ <- parseArray l dataset
-
-      return $ DataSet
-                  name
-                  database_code
-                  database_id
-                  description
-                  dataset_code
-                  column_names
-                  data_
-                  newest_available_date
-                  oldest_available_date
-                  limit
-                  column_index
-                  start_date
-                  end_date
-                  order
-                  collapse
-                  transform
+      case M.lookup "data" v of
+        Nothing ->
+          fail "expected dataset"
+        Just dataset -> do
+          let l = length column_names
+          data_ <- parseArray l dataset
+          return $ DataSet
+                      name
+                      database_code
+                      database_id
+                      description
+                      dataset_code
+                      column_names
+                      data_
+                      newest_available_date
+                      oldest_available_date
+                      limit
+                      column_index
+                      start_date
+                      end_date
+                      order
+                      collapse
+                      transform
 
   parseJSON _ = fail "expected object"
 
